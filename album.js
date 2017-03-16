@@ -1,7 +1,51 @@
+var currentAlbum = null;
+var currentlyPlayingSongNumber = null;
+var currentSongFromAlbum = null;
+var currentSoundFile = null;
+var currentVolume = 80;
+
+var $previousButton = $('.main-controls .previous');
+var $nextButton = $('.main-controls .next');
+
+var $playerBarPlayPause = $('.main-controls .play-pause');
+
+var togglePlayFromPlayerBar = function(){
+    if (currentSoundFile.isPaused() && $playerBarPlayPause.click()){
+      console.log(currentlyPlayingSongNumber)  currentlyPlayingSongNumber.innerHTML(pauseButtonTemplate);
+        $playerBarPlayPause.html(playerBarPauseButton);
+        currentSoundFile.play();    
+    }
+    else if(currentSoundFile ==! null && $playerBarPlayPause.click()){
+        currentlyPlayingSongNumber.html(playButtonTemplate);
+        $playerBarPlayPause.html(playerBarPlayButton);
+        currentSoundFile.pause();
+    }
+};
+
 var setSong = function(songNumber){
+    if (currentSoundFile) {
+         currentSoundFile.stop();
+     }
+ 
     currentlyPlayingSongNumber = parseIn(songNumber);
     currentSongFromAlbum = currentAlbum.songs[songNumber - 1];
-}
+    
+    currentSoundFile = new buzz.sound(currentSongFromAlbum.audioUrl, {
+
+        formats: [ 'mp3' ],
+         preload: true
+     });
+    
+    setVolume(currentVolume);
+};
+
+
+
+var setVolume = function(volume){
+    if (currentSoundFile) {
+        currentSoundFile.setVolume(volume);
+    }
+};
  
 var getsongNumberCell = function(number){
     return $('.song-item-number[data-song-number="' + number + '"]');
@@ -27,15 +71,22 @@ var createSongRow = function(songNumber, songName, songLength) {
 	}
          if (currentlyPlayingSongNumber !== songNumber) {
 		// Switch from Play -> Pause button to indicate new song is playing.
+         currentSoundFile.play();
          $(this).html(pauseButtonTemplate);
 		 setSong(songNumber);
          updatePlayerBarSong();
+             
          } else if (currentlyPlayingSongNumber === songNumber) {
-		// Switch from Pause -> Play button to pause currently playing song.
-		 $(this).html(playButtonTemplate);
-         $('.main-controls .play-pause').html(playerBarPlayButton);
-		 currentlyPlayingSongNumber = null;
-         currentSongFromAlbum = null;
+             
+		 if (currentSoundFile.isPaused()) {
+            $(this).html(pauseButtonTemplate);
+            $('.main-controls .play-pause').html(playerBarPauseButton);
+            currentSoundFile.play();
+        } else {
+            $(this).html(playButtonTemplate);
+            $('.main-controls .play-pause').html(playerBarPlayButton);
+                currentSoundFile.pause();   
+            }
 	}
 };
      };
@@ -105,20 +156,17 @@ var playButtonTemplate = '<a class="album-song-button"><span class="ion-play"></
 
 var pauseButtonTemplate = '<a class="album-song-button"><span class="ion-pause"></span></a>';
 var playerBarPlayButton = '<span class="ion-play"></span>';
- var playerBarPauseButton = '<span class="ion-pause"></span>';
+var playerBarPauseButton = '<span class="ion-pause"></span>';
 
-var currentAlbum = null;
-var currentlyPlayingSongNumber = null;
-var currentSongFromAlbum = null;
-
-var $previousButton = $('.main-controls .previous');
-var $nextButton = $('.main-controls .next');
 
 
  $(document).ready(function() {
+     
+     
      setCurrentAlbum(albumPicasso);
      $previousButton.click(previousSong);
      $nextButton.click(nextSong);
+     $playerBarPauseButton.click(togglePlayFromPlayerBar());
      });
      
     var albums = [albumPicasso, albumMarconi, albumHayeon];
@@ -147,7 +195,8 @@ var nextSong = function() {
     }
 
     // Set a new current song
-    currentlyPlayingSongNumber = currentSongIndex + 1;
+    setSong(currentSongIndex + 1);
+    currentSoundFile.play();
     currentSongFromAlbum = currentAlbum.songs[currentSongIndex];
 
     // Update the Player Bar information
@@ -179,7 +228,8 @@ var previousSong = function() {
     }
 
     // Set a new current song
-    currentlyPlayingSongNumber = currentSongIndex + 1;
+    setSong(currentSongIndex + 1);
+    currentSoundFile.play();
     currentSongFromAlbum = currentAlbum.songs[currentSongIndex];
 
     // Update the Player Bar information
